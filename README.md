@@ -1,21 +1,13 @@
-# lab-08-back-end
-lab-08-back-end
-Number and name of feature: feature 1 for location
+# lab-09-cache-invalidation
 
-Estimate of time needed to complete: 1.5hours
+By Nicole Kalbfleisch & Karl Polintan
 
-Start time: 6pm
+Number and name of feature: feature 1
 
-Finish time: 8pm the next day
+Estimate of time needed to complete: 1 hours
 
-Actual time needed to complete: 4 hours on thursday and about 4 hours on friday
+Start time: 2pm
 
-Number and name of feature: feature 1 for weather
-
-Estimate of time needed to complete: ?
-
-Start time: 8pm
-
-Finish time: incomplete
+Finish time: 
 
 Actual time needed to complete: 
