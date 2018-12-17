@@ -26,3 +26,17 @@ CREATE TABLE meetups (
     creation_date VARCHAR(255),
     host VARCHAR(255)
 );
+
+CREATE TABLE hiking (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255),
+    location VARCHAR(255),
+    length FLOAT,
+    stars FLOAT,
+    star_votes INT,
+    summary VARCHAR(255),
+    trail_url VARCHAR(255),
+    conditions VARCHAR(255),
+    condition_date VARCHAR(255),
+    condition_time VARCHAR(255)
+);
