@@ -149,6 +149,7 @@ function searchWeather(query){
           })
           .catch(err => {
             console.log('========== error from weather ===========')
+            console.log(err);
           })
       } else {
         console.log('found stuff in the db for weather');
@@ -275,7 +276,7 @@ function searchMeets(query) {
             .then(meetData => {
               let meetsArr = meetData.body.results.map(meeting => {
                 let data = {};
-                data.link = link.summary; // link issue?
+                data.link = meeting.link; // link issue?
                 data.name = meeting.name;
                 data.creation_date = new Date (meeting.time * 1000).toDateString();
                 data.host = meeting.host;
@@ -326,10 +327,66 @@ host
 */
 
 // Hiking https://www.hikingproject.com/data
-// function getHiked () {}
-// const url=`https://www.hikingproject.com/data/get-trails?lat=${lat}&lon=${lon}&maxDistance=20&key=${process.env.HIKING_API_KEY}`;
+function getHiked (req, res) {
+  return searchHike(req.query.data)
+  .then(hikeData => {
+    res.send(hikeData);}
+  );
+}
 
-// function Hike () {} // leHikeConstruct
+function searchHike(query) {
+  const url=`https://www.hikingproject.com/data/get-trails?lat=${lat}&lon=${lon}&maxDistance=20&key=${process.env.HIKING_API_KEY}`;
+  const SQL = 'SELECT * FROM hiking WHERE location_id=$1';
+    return client.query(SQL, [query.id])
+      .then(result => {
+        if(!result.rowCount){
+          console.log('going on a hike');
+          return superAgent.get(url)
+            .then(hikeData => {
+              let hikeArr = hikedata.body.results.map(hike => {
+                let data = {};
+                data.name = hike.name;
+                data.location = hike.location;
+                data.length = hike.length;
+                data.stars = hike.stars;
+                data.star_votes = hike.star_votes;
+                data.summary = hike.summary;
+                data.trail_url = hike.trail_url;
+                data.conditions = hike.conditions;
+                data.condition_date = new Date(hike.condition_time *1000).toDateString();
+                data.condition_time = hike.condition_time;
+              }
+            );
+            // put hike data in DB
+            hikeArr.forEach(hiking => {
+              console.log('storing hike');
+              const SQL = 'INSERT INTO hiking (name, location, length, stars, star_votes, summary, trail_url, conditions, condition_date, condition_time) VALUES($1, $2, $3, $4, $5)';
+              const values = [hiking.name, hiking.location, hiking.length, hiking.stars, hiking.star_votes, hiking.summary, hiking.trail_url, hiking.conditions, Date.now(), hiking.condition_time, query.id]
+              client.query(SQL, values)
+                .catch(err => {
+                  console.log('====== this error from hiking ========')
+                  console.error(err);
+                });
+            })
+            return hikeArr;
+          })
+          .catch(err => {
+            console.log('====== this error from hiking ========')
+            console.error(err)
+          })
+      } else {
+        console.log('found hiking info in DB')
+        // CACHE INVALIDATION likely goes here
+        return result.rows
+      }
+    })
+    .catch(err => {
+      console.log('====== this error from hiking ========')
+      console.error(err);
+    });
+}
+
+function Hike () {} // leHikeConstruct
 /* properties
 name
 loction
