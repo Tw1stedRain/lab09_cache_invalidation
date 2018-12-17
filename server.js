@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 'use strict';
 
 //Application Dependencies
@@ -44,7 +45,7 @@ app.get('/yelp', getYelp);
 
 app.get('/movies', getMov);
 
-//app.get('/meetup', getMeets);
+app.get('/meetup', getMeets);
 //app.get('/hiking', getHiked);
 
 
@@ -264,11 +265,50 @@ function getMeets (req, res){
 }
 
 function searchMeets(query) {
-  const url=`https://api.meetup.com/2/events?key=${MEETUP_API_KEY}&group_urlname=CodeFellows&sign=true&lat=${lat}&lon=${lon}&category=coding&total_count=10`;
-  return superAgent.get(url)
-    .then(meetData => {
-      return meetData.body.results.map
-      (meeting => new Meeting(meeting));
+  const url=`https://api.meetup.com/2/events?key=${process.env.MEETUP_API_KEY}&group_urlname=CodeFellows&sign=true&lat=${query.latitude}&lon=${query.longitude}&category=coding&total_count=10`;
+  const SQL = 'SELECT * FROM meetups where location_id=$1';
+    return client.query(SQL, [query.id])
+      .then(result => {
+        if(!result.rowCount){
+          console.log('gettin stuff for Meets');
+          return superAgent.get(url)
+            .then(meetData => {
+              let meetsArr = meetData.body.results.map(meeting => {
+                let data = {};
+                data.link = link.summary; // link issue?
+                data.name = meeting.name;
+                data.creation_date = new Date (meeting.time * 1000).toDateString();
+                data.host = meeting.host;
+                console.log(data);
+                return data;
+              }
+            );
+              // put meeting data in DB
+            meetsArr.forEach(meeting => {
+              console.log('storing a meetup');
+              const SQL = 'INSERT INTO meetups (link, name, creation_date, meeting, location_id) VALUES($1, $2, $3, $4, $5)';
+              const values = [meeting.link, meeting.name, Date.now(), query.id]
+              client.query(SQL, values)
+                .catch(err => {
+                  console.log('======= dis error from meets =======')
+                  console.error(err);
+                });
+            })
+            return meetsArr;
+          })
+          .catch(err => {
+            console.log('======= dis error from meets =======')
+            console.log(err)
+          })
+      } else {
+        console.log('found info in DB for meets');
+        // CACHE INVALIDATION likely goes here
+        return result.rows;
+      }
+    })
+    .catch(err => {
+    console.log('======= dis error from meets =======')
+    console.error(err)
     });
 }
 
@@ -287,7 +327,7 @@ host
 
 // Hiking https://www.hikingproject.com/data
 // function getHiked () {}
-// const url=`https://www.hikingproject.com/data/get-trails?lat=${lat}&lon=${lon}&maxDistance=20&key=${HIKING_API_KEY}`;
+// const url=`https://www.hikingproject.com/data/get-trails?lat=${lat}&lon=${lon}&maxDistance=20&key=${process.env.HIKING_API_KEY}`;
 
 // function Hike () {} // leHikeConstruct
 /* properties
